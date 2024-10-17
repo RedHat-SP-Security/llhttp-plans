@@ -1,0 +1,23 @@
+# used in
+# https://gitlab.com/redhat/centos-stream/llhttp/-/tree/c10s
+
+summary: rpmverify test
+
+prepare:
+  - how: shell
+    script:
+     - systemctl disable --now dnf-makecache.service || true
+     - systemctl disable --now dnf-makecache.timer || true
+     - dnf makecache
+     - dnf repolist --all | grep -iE "crb|codeready|powertools" | grep -ivE "debug|source" | cut -d " " -f1 | xargs dnf config-manager --set-enabled
+
+execute:
+    how: tmt
+
+discover:
+  - name: test
+    how: shell
+    tests:
+      - name: rpmverify
+        test: 'rpmverify $(rpm -qa | grep llhttp)'
+        duration: 2m
